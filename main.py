@@ -1,20 +1,18 @@
 import ply.lex as lex
 
-
-
 states = [
-    ('bold','exclusive'),
-    ('italic','exclusive'),
+    ('bold', 'exclusive'),
+    ('italic', 'exclusive'),
 ]
 
-tokens = ['BOLD','ITL']
+tokens = ['BOLD', 'ITL']
 
-#BOLD
+
+# BOLD
 def t_INITIAL_BOLD(t):
     r'**'
     t.lexer.push_state('bold')
-    
-
+    print(t.lexer.lexstateinfo)
 def t_bold_BOLD(t):
     r'**'
     t.lexer.pop_state()
@@ -30,8 +28,9 @@ def t_INITIAL_ITL(t):
 def t_italic_itl(t):
     r'//'
     t.lexer.pop_state()
-    
+
 def t_ANY_error(t):
     print('Invalid Character!')
+
 
 lexer = lex.lex()
