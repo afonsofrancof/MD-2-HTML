@@ -221,10 +221,6 @@ lexer.listtype = ""
 for tok in lexer:
     pass
 
-# CODE TO BE REMOVED
-os.remove(sys.argv[2])
-# END OF CODE TO BE REMOVED
-
 # Open output file
 outputFile = open(sys.argv[2], "x")
 outputFile.write(lexer.output)
