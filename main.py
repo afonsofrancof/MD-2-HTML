@@ -9,14 +9,12 @@ states = [
     ('underlined', 'exclusive'),
     ('strikethrough', 'exclusive'),
     ('list', 'exclusive'),
-    ('image', 'exclusive'),
     ('header', 'exclusive')
 ]
 
 tokens = ['BOLD', 'ITL', 'UNDLINE', 'STRIKE',
           'LISTO', 'LISTC',
-          'IMAGEO', 'IMAGEC', 'IMAGEPROP',
-          'HDR', 'TEXT', 'LINEDOWN']
+          'IMAGE', 'HDR', 'TEXT', 'LINEDOWN']
 
 # Global Variables
 headerSize = 0
@@ -128,6 +126,10 @@ def t_list_LISTC(t):
             t.lexer.output += '</ul>'
         case "dictionary":
             t.lexer.output += '</dl>'
+        case "table":
+            t.lexer.listtype = "table"
+            t.lexer.output += '</table>'
+            t.lexer.rownum = True
         case _:
             pass
     return t
@@ -148,6 +150,9 @@ def t_INITIAL_LISTO(t):
         case "dictionary":
             t.lexer.listtype = "dictionary"
             t.lexer.output += '<dl>'
+        case "table":
+            t.lexer.listtype = "table"
+            t.lexer.output += '<table border=1px>'
         case _:
             pass
     return t
@@ -157,30 +162,29 @@ def t_list_TEXT(t):
     r'\ *.+\ *'
     match t.lexer.listtype:
         case "dictionary":
-            [word, definition] = t.value.split(":")
-            t.lexer.output += '<dt>' + word.strip() + '</dt>'
-            t.lexer.output += '<dd>' + definition.strip() + '</dd>'
+            list = t.value.split(":")
+            t.lexer.output += '<dt>' + list[0].strip() + '</dt>'
+            t.lexer.output += '<dd>' + list[1].strip() + '</dd>'
+        case "table":
+            t.lexer.output += "\t<tr>\n"
+            row_data = t.value.strip().split('|')
+            for cell in row_data:
+                if t.lexer.fstrow:
+                    t.lexer.output += "\t\t<th>" + cell.strip() + "</th>\n"
+                else:
+                    t.lexer.output += "\t\t<td>" + cell.strip() + "</td>\n"
+            t.lexer.output += "\t</tr>"
+            t.lexer.fstrow = False
         case _:
             t.lexer.output += '<li>' + t.value.strip() + '</li>'
 
 
 # IMAGE
 
-def t_INITIAL_IMAGEO(t):
-    r'img\{'
-    t.lexer.push_state('image')
-    t.lexer.output += '<img '
-
-
-def t_image_IMAGEC(t):
-    r'\}'
-    t.lexer.pop_state()
-    t.lexer.output += '>'
-
-
-def t_image_IMAGEPROP(t):
-    r'\ *(.+)\ *\=\ *([^\}]+)\ *'
-    t.lexer.output += t.value.strip()
+def t_INITIAL_IMAGE(t):
+    r'img\{\ *[^\{}]\}\ *'
+    lista = t.value.strip().split('{}')
+    t.lexer.output += r'<img "' + lista[1] + r'">\n<br>'
 
 
 # TEXT
@@ -217,6 +221,7 @@ lexer.input(text)
 # Define our variable
 lexer.output = ""
 lexer.listtype = ""
+lexer.fstrow = True
 
 for tok in lexer:
     pass

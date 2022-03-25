@@ -11,29 +11,26 @@ __This is underlined text__
 
 //Bold $$text$$ inside italic text//
 
-
 [{num}
  ORDERED ELEMENT 1
  ORDERED ELEMENT 2
 ]
+
 [{dot}
  UNORDERED ELEMENT 1
  UNORDERED ELEMENT 2
 ]
+
 [{dictionary}
  key1: value1
  key2: value2
 ]
 
-img{ src="logo.png" width=50 comment="this is a cool image" }
+[{table}
+    Comida|Calorias
+    big mac| 500
+    arroz| 300
+    teclado |nao recomendo
+]
 
-|dawdawdawd|jrtjrjrjr
-|----------|-|
-|dawdadw|hrhtrhrt|
-|dadawdaw|htrhrthr|
-|dawdadaw|sefesfgre|
-
-
-
-
-
+img{logo.png}
