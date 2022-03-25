@@ -1,0 +1,39 @@
+@ This is a title
+@@ This is a subtitle
+
+//This is italic text//
+
+$$this is __bold__ text$$
+
+__This is underlined text__
+
+--This is strike through text--
+
+//Bold $$text$$ inside italic text//
+
+
+[{num}
+ ORDERED ELEMENT 1
+ ORDERED ELEMENT 2
+]
+[{dot}
+ UNORDERED ELEMENT 1
+ UNORDERED ELEMENT 2
+]
+[{dictionary}
+ key1: value1
+ key2: value2
+]
+
+img{ src="logo.png" width=50 comment="this is a cool image" }
+
+|dawdawdawd|jrtjrjrjr
+|----------|-|
+|dawdadw|hrhtrhrt|
+|dadawdaw|htrhrthr|
+|dawdadaw|sefesfgre|
+
+
+
+
+
