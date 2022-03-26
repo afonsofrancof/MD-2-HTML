@@ -53,7 +53,7 @@ def t_bold_BOLD(t):
     t.lexer.output += "</strong>"
 
 
-def t_INITIAL_italic_underlined_strikethrough_BOLD(t):
+def t_INITIAL_italic_underlined_strikethrough_list_BOLD(t):
     r'\$\$'
     a = t.lexer.lexstatestack
     if 'bold' in a:
@@ -70,7 +70,7 @@ def t_italic_ITL(t):
     t.lexer.output += "</em>"
 
 
-def t_INITIAL_bold_underlined_strikethrough_ITL(t):
+def t_INITIAL_bold_underlined_strikethrough_list_ITL(t):
     r'//'
     a = t.lexer.lexstatestack
     if 'italic' in a:
@@ -87,7 +87,7 @@ def t_underlined_UNDLINE(t):
     t.lexer.output += "</u>"
 
 
-def t_INITIAL_bold_italic_strikethrough_UNDLINE(t):
+def t_INITIAL_bold_italic_strikethrough_list_UNDLINE(t):
     r'__'
     a = t.lexer.lexstatestack
     if 'underlined' in a:
@@ -182,14 +182,15 @@ def t_list_TEXT(t):
 # IMAGE
 
 def t_INITIAL_IMAGE(t):
-    r'img\{\ *[^\{}]\}\ *'
-    lista = t.value.strip().split('{}')
-    t.lexer.output += r'<img "' + lista[1] + r'">\n<br>'
+    r'img\{\ *[^\{\}]+\}\ *'
+    lista = t.value.strip().split('{')[1].split('}')
+    t.lexer.output += r'<img src="' + lista[0] + '\">\n<br>'
 
 
 # TEXT
 def t_ANY_LINEDOWN(t):
     r'(\n\n)'
+    # <\p>
     t.lexer.output += '\n<br>\n'
     return t
 
