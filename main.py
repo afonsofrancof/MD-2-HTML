@@ -23,7 +23,7 @@ headerSize = 0
 
 # formatação: negrito, itálico, sublinhado;
 # • vários níveis de títulos;
-# • listas de tópicos (items) não-numerados, numerados ou tipo entradas de um dicioná- rio ;
+# • listas de tópicos (items) não-numerados, numerados ou tipo entradas de um dicionário ;
 # • inclusão de imagens;
 # • inclusão e formatação de tabelas;
 # • todos os outros que achar necessário ou a sua imaginação vislumbrar.
@@ -244,7 +244,6 @@ def t_struct_TEXT(t):
 
 
 # IMAGE
-# talvez de no paragrafo --- ver mais tarde
 def t_INITIAL_paragraph_IMAGE(t):
     r'img\{\ *[^\{\}]+\}\ *'
     lista = t.value.strip().split('{')[1].split('}')

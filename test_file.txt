@@ -1,6 +1,5 @@
 @ This is a title
 @@ This is a subtitle
-
 //This is italic text//
 
 $$this is __bold__ text$$
@@ -10,6 +9,8 @@ __This is underlined text__
 --This is strike through text--
 
 //Bold $$text$$ inside italic text//
+
+texto de teste para as tags de paragrafo :)
 
 [{num}
  ORDERED ELEMENT 1
@@ -27,10 +28,10 @@ __This is underlined text__
 ]
 
 [{table}
-    Comida|Calorias
-    big mac| 500
-    arroz| 300
-    teclado |nao recomendo
+    Comida|Calorias|Preco 
+    big mac| 500|2.99
+    arroz| 300| 0.99
+    teclado |nao recomendo| 299
 ]
 
 img{logo.png}
