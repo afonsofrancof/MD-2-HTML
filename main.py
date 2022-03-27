@@ -4,6 +4,7 @@ import sys
 import ply.lex as lex
 
 states = [
+    ('paragraph', 'exclusive'),
     ('bold', 'exclusive'),
     ('italic', 'exclusive'),
     ('underlined', 'exclusive'),
@@ -47,13 +48,19 @@ def t_header_TEXT(t):
 
 
 # BOLD
-def t_bold_BOLD(t):
+def t_BOLD(t):
     r'\$\$'
-    t.lexer.pop_state()
-    t.lexer.output += "</strong>"
+    t.lexer.output += "<p>\n"
+    a = t.lexer.lexstatestack
+    t.lexer.push_state('paragraph')
+    if 'bold' in a:
+        return t
+    else:
+        t.lexer.push_state('bold')
+        t.lexer.output += "<strong>"
 
 
-def t_INITIAL_italic_underlined_strikethrough_list_BOLD(t):
+def t_paragraph_italic_underlined_strikethrough_list_BOLD(t):
     r'\$\$'
     a = t.lexer.lexstatestack
     if 'bold' in a:
@@ -63,14 +70,26 @@ def t_INITIAL_italic_underlined_strikethrough_list_BOLD(t):
         t.lexer.output += "<strong>"
 
 
-# Italic
-def t_italic_ITL(t):
-    r'//'
+def t_bold_BOLD(t):
+    r'\$\$'
     t.lexer.pop_state()
-    t.lexer.output += "</em>"
+    t.lexer.output += "</strong>"
 
 
-def t_INITIAL_bold_underlined_strikethrough_list_ITL(t):
+# Italic
+def t_ITL(t):
+    r'//'
+    a = t.lexer.lexstatestack
+    t.lexer.push_state('paragraph')
+    t.lexer.output += "<p>\n"
+    if 'italic' in a:
+        return t
+    else:
+        t.lexer.push_state('italic')
+        t.lexer.output += "<em>"
+
+
+def t_paragraph_bold_underlined_strikethrough_list_ITL(t):
     r'//'
     a = t.lexer.lexstatestack
     if 'italic' in a:
@@ -80,14 +99,26 @@ def t_INITIAL_bold_underlined_strikethrough_list_ITL(t):
         t.lexer.output += "<em>"
 
 
-# UNDERLINED
-def t_underlined_UNDLINE(t):
-    r'__'
+def t_italic_ITL(t):
+    r'//'
     t.lexer.pop_state()
-    t.lexer.output += "</u>"
+    t.lexer.output += "</em>"
 
 
-def t_INITIAL_bold_italic_strikethrough_list_UNDLINE(t):
+# UNDERLINED
+def t_UNDLINE(t):
+    r'__'
+    a = t.lexer.lexstatestack
+    t.lexer.push_state('paragraph')
+    t.lexer.output += "<p>\n"
+    if 'underlined' in a:
+        return t
+    else:
+        t.lexer.push_state('underlined')
+        t.lexer.output += "<u>"
+
+
+def t_paragraph_bold_italic_strikethrough_list_UNDLINE(t):
     r'__'
     a = t.lexer.lexstatestack
     if 'underlined' in a:
@@ -97,14 +128,26 @@ def t_INITIAL_bold_italic_strikethrough_list_UNDLINE(t):
         t.lexer.output += "<u>"
 
 
-# STRIKETHROUGH
-def t_strikethrough_STRIKE(t):
-    r'--'
+def t_underlined_UNDLINE(t):
+    r'__'
     t.lexer.pop_state()
-    t.lexer.output += "</del>"
+    t.lexer.output += "</u>"
 
 
-def t_INITIAL_bold_italic_underlined_STRIKE(t):
+# STRIKETHROUGH
+def t_STRIKE(t):
+    r'--'
+    a = t.lexer.lexstatestack
+    t.lexer.push_state('paragraph')
+    t.lexer.output += '<p>\n'
+    if 'strikethrough' in a:
+        return t
+    else:
+        t.lexer.push_state('strikethrough')
+        t.lexer.output += "<del>"
+
+
+def t_paragraph_bold_italic_underlined_STRIKE(t):
     r'--'
     a = t.lexer.lexstatestack
     if 'strikethrough' in a:
@@ -114,45 +157,53 @@ def t_INITIAL_bold_italic_underlined_STRIKE(t):
         t.lexer.output += "<del>"
 
 
-# LIST
+def t_strikethrough_STRIKE(t):
+    r'--'
+    t.lexer.pop_state()
+    t.lexer.output += "</del>"
 
+
+# LIST
 def t_list_LISTC(t):
     r'\]\ *'
     t.lexer.pop_state()
     match t.lexer.listtype:
         case "num":
-            t.lexer.output += '</ol>'
+            t.lexer.output += '</ol>\n'
         case "dot":
-            t.lexer.output += '</ul>'
+            t.lexer.output += '</ul>\n'
         case "dictionary":
-            t.lexer.output += '</dl>'
+            t.lexer.output += '</dl>\n'
         case "table":
             t.lexer.listtype = "table"
-            t.lexer.output += '</table>'
+            t.lexer.output += '</table>\n'
             t.lexer.rownum = True
         case _:
             pass
     return t
 
 
-def t_INITIAL_LISTO(t):
+def t_INITIAL_paragraph_LISTO(t):
     r'\[\ *\{\ *\w+\}'
+    if 'paragraph' in t.lexer.lexstatestack:
+        t.lexer.pop_state()
+        t.lexer.output += '\n</p>\n'
     t.lexer.push_state('list')
     for character in r'[{} ':
         t.value = t.value.replace(character, "")
     match t.value:
         case "num":
             t.lexer.listtype = 'num'
-            t.lexer.output += '<ol>'
+            t.lexer.output += '\n<ol>'
         case "dot":
             t.lexer.listtype = 'dot'
-            t.lexer.output += '<ul>'
+            t.lexer.output += '\n<ul>'
         case "dictionary":
             t.lexer.listtype = "dictionary"
-            t.lexer.output += '<dl>'
+            t.lexer.output += '\n<dl>'
         case "table":
             t.lexer.listtype = "table"
-            t.lexer.output += '<table border=1px>'
+            t.lexer.output += '\n<table border=1px>'
         case _:
             pass
     return t
@@ -180,30 +231,40 @@ def t_list_TEXT(t):
 
 
 # IMAGE
-
-def t_INITIAL_IMAGE(t):
+# talvez de no paragrafo --- ver mais tarde
+def t_INITIAL_paragraph_IMAGE(t):
     r'img\{\ *[^\{\}]+\}\ *'
     lista = t.value.strip().split('{')[1].split('}')
-    t.lexer.output += r'<img src="' + lista[0] + '\">\n<br>'
+    t.lexer.output += r'<img src="' + lista[0] + '\">'
 
 
 # TEXT
+def t_paragraph_LINEDOWN(t):
+    r'\n\n'
+    t.lexer.output += '\n</p>\n'
+    t.lexer.pop_state()
+
+
 def t_ANY_LINEDOWN(t):
-    r'(\n\n)'
-    # <\p>
-    t.lexer.output += '\n<br>\n'
+    r'\n\n'
     return t
 
 
-def t_ANY_TEXT(t):
+def t_TEXT(t):
     r'(.|\n)'
     t.lexer.output += t.value
     return t
 
 
+def t_bold_italic_underlined_strikethrough_list_TEXT(t):
+    r'(.|\n)'
+    t.lexer.output += t.value
+    return t
 # ERROR
+
+
 def t_ANY_error(t):
-    print('Invalid Character!')
+    print('Invalid Character! ' + t.value)
 
 
 if len(sys.argv) < 3:
@@ -220,7 +281,7 @@ lexer = lex.lex()
 lexer.input(text)
 
 # Define our variable
-lexer.output = ""
+lexer.output = "<html>\n<body>\n"
 lexer.listtype = ""
 lexer.fstrow = True
 
@@ -228,6 +289,7 @@ for tok in lexer:
     pass
 
 # Open output file
-outputFile = open(sys.argv[2], "x")
+outputFile = open(sys.argv[2], "w")
+lexer.output += "</html>\n</body>\n"
 outputFile.write(lexer.output)
 outputFile.close()
