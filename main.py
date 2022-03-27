@@ -9,12 +9,12 @@ states = [
     ('italic', 'exclusive'),
     ('underlined', 'exclusive'),
     ('strikethrough', 'exclusive'),
-    ('list', 'exclusive'),
+    ('struct', 'exclusive'),
     ('header', 'exclusive')
 ]
 
 tokens = ['BOLD', 'ITL', 'UNDLINE', 'STRIKE',
-          'LISTO', 'LISTC',
+          'STRUCTO', 'STRUCTC',
           'IMAGE', 'HDR', 'TEXT', 'LINEDOWN']
 
 # Global Variables
@@ -44,13 +44,26 @@ def t_header_TEXT(t):
     r'.+'
     t.lexer.pop_state()
     t.lexer.output += t.value.strip()
-    t.lexer.output += "</h" + str(headerSize) + ">"
+    t.lexer.output += "</h" + str(headerSize) + ">\n"
+
+
+def t_paragraph_HDR(t):
+    r'\@+'
+    t.lexer.pop_state()
+    t.lexer.output += '</p>\n'
+    t.lexer.push_state('header')
+    global headerSize
+    headerSize = 0
+    for character in t.value:
+        if character == '@':
+            headerSize += 1
+    t.lexer.output += "<h" + str(headerSize) + ">"
 
 
 # BOLD
 def t_BOLD(t):
     r'\$\$'
-    t.lexer.output += "<p>\n"
+    t.lexer.output += "\n<p>\n"
     a = t.lexer.lexstatestack
     t.lexer.push_state('paragraph')
     if 'bold' in a:
@@ -60,7 +73,7 @@ def t_BOLD(t):
         t.lexer.output += "<strong>"
 
 
-def t_paragraph_italic_underlined_strikethrough_list_BOLD(t):
+def t_paragraph_italic_underlined_strikethrough_struct_BOLD(t):
     r'\$\$'
     a = t.lexer.lexstatestack
     if 'bold' in a:
@@ -89,7 +102,7 @@ def t_ITL(t):
         t.lexer.output += "<em>"
 
 
-def t_paragraph_bold_underlined_strikethrough_list_ITL(t):
+def t_paragraph_bold_underlined_strikethrough_struct_ITL(t):
     r'//'
     a = t.lexer.lexstatestack
     if 'italic' in a:
@@ -110,7 +123,7 @@ def t_UNDLINE(t):
     r'__'
     a = t.lexer.lexstatestack
     t.lexer.push_state('paragraph')
-    t.lexer.output += "<p>\n"
+    t.lexer.output += "\n<p>\n"
     if 'underlined' in a:
         return t
     else:
@@ -118,7 +131,7 @@ def t_UNDLINE(t):
         t.lexer.output += "<u>"
 
 
-def t_paragraph_bold_italic_strikethrough_list_UNDLINE(t):
+def t_paragraph_bold_italic_strikethrough_struct_UNDLINE(t):
     r'__'
     a = t.lexer.lexstatestack
     if 'underlined' in a:
@@ -139,7 +152,7 @@ def t_STRIKE(t):
     r'--'
     a = t.lexer.lexstatestack
     t.lexer.push_state('paragraph')
-    t.lexer.output += '<p>\n'
+    t.lexer.output += '\n<p>\n'
     if 'strikethrough' in a:
         return t
     else:
@@ -163,11 +176,11 @@ def t_strikethrough_STRIKE(t):
     t.lexer.output += "</del>"
 
 
-# LIST
-def t_list_LISTC(t):
+# STRUCTS
+def t_struct_STRUCTC(t):
     r'\]\ *'
     t.lexer.pop_state()
-    match t.lexer.listtype:
+    match t.lexer.structtype:
         case "num":
             t.lexer.output += '</ol>\n'
         case "dot":
@@ -175,7 +188,7 @@ def t_list_LISTC(t):
         case "dictionary":
             t.lexer.output += '</dl>\n'
         case "table":
-            t.lexer.listtype = "table"
+            t.lexer.structtype = "table"
             t.lexer.output += '</table>\n'
             t.lexer.rownum = True
         case _:
@@ -183,38 +196,38 @@ def t_list_LISTC(t):
     return t
 
 
-def t_INITIAL_paragraph_LISTO(t):
+def t_INITIAL_paragraph_STRUCTO(t):
     r'\[\ *\{\ *\w+\}'
     if 'paragraph' in t.lexer.lexstatestack:
         t.lexer.pop_state()
         t.lexer.output += '\n</p>\n'
-    t.lexer.push_state('list')
+    t.lexer.push_state('struct')
     for character in r'[{} ':
         t.value = t.value.replace(character, "")
     match t.value:
         case "num":
-            t.lexer.listtype = 'num'
+            t.lexer.structtype = 'num'
             t.lexer.output += '\n<ol>'
         case "dot":
-            t.lexer.listtype = 'dot'
+            t.lexer.structtype = 'dot'
             t.lexer.output += '\n<ul>'
         case "dictionary":
-            t.lexer.listtype = "dictionary"
+            t.lexer.structtype = "dictionary"
             t.lexer.output += '\n<dl>'
         case "table":
-            t.lexer.listtype = "table"
+            t.lexer.structtype = "table"
             t.lexer.output += '\n<table border=1px>'
         case _:
             pass
     return t
 
 
-def t_list_TEXT(t):
+def t_struct_TEXT(t):
     r'\ *.+\ *'
-    match t.lexer.listtype:
+    match t.lexer.structtype:
         case "dictionary":
             list = t.value.split(":")
-            t.lexer.output += '<dt>' + list[0].strip() + '</dt>'
+            t.lexer.output += '\t<dt>' + list[0].strip() + '</dt>'
             t.lexer.output += '<dd>' + list[1].strip() + '</dd>'
         case "table":
             t.lexer.output += "\t<tr>\n"
@@ -227,7 +240,7 @@ def t_list_TEXT(t):
             t.lexer.output += "\t</tr>"
             t.lexer.fstrow = False
         case _:
-            t.lexer.output += '<li>' + t.value.strip() + '</li>'
+            t.lexer.output += '\t<li>' + t.value.strip() + '</li>'
 
 
 # IMAGE
@@ -241,7 +254,7 @@ def t_INITIAL_paragraph_IMAGE(t):
 # TEXT
 def t_paragraph_LINEDOWN(t):
     r'\n\n'
-    t.lexer.output += '\n</p>\n'
+    t.lexer.output += '\n</p>'
     t.lexer.pop_state()
 
 
@@ -252,17 +265,23 @@ def t_ANY_LINEDOWN(t):
 
 def t_TEXT(t):
     r'(.|\n)'
+    t.lexer.output += '\n<p>\n'
     t.lexer.output += t.value
+    t.lexer.push_state('paragraph')
     return t
 
 
-def t_bold_italic_underlined_strikethrough_list_TEXT(t):
+def t_paragraph_bold_italic_underlined_strikethrough_struct_TEXT(t):
     r'(.|\n)'
     t.lexer.output += t.value
     return t
+
+
+t_ignore = '\n'
+t_header_paragraph_bold_italic_underlined_strikethrough_struct_ignore = ''
+
+
 # ERROR
-
-
 def t_ANY_error(t):
     print('Invalid Character! ' + t.value)
 
@@ -282,7 +301,7 @@ lexer.input(text)
 
 # Define our variable
 lexer.output = "<html>\n<body>\n"
-lexer.listtype = ""
+lexer.structtype = ""
 lexer.fstrow = True
 
 for tok in lexer:
@@ -290,6 +309,6 @@ for tok in lexer:
 
 # Open output file
 outputFile = open(sys.argv[2], "w")
-lexer.output += "</html>\n</body>\n"
+lexer.output += "</body>\n</html>"
 outputFile.write(lexer.output)
 outputFile.close()
